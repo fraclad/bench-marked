@@ -13,14 +13,25 @@ let clientPromise;
 if (process.env.NODE_ENV === 'development') {
   // In development mode, use a global variable so the MongoClient isn't repeatedly instantiated
   if (!global._mongoClientPromise) {
-    client = new MongoClient(MONGODB_URI);
-    global._mongoClientPromise = client.connect();
+    client = new MongoClient(MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+    });
+    global._mongoClientPromise = client.connect().catch((error) => {
+      console.error('MongoDB connection error (development):', error);
+      throw error;
+    });
   }
   clientPromise = global._mongoClientPromise;
 } else {
   // In production mode, create a new MongoClient instance
-  client = new MongoClient(MONGODB_URI);
-  clientPromise = client.connect();
+  client = new MongoClient(MONGODB_URI, {
+    serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+  });
+  clientPromise = client.connect().catch((error) => {
+    console.error('MongoDB connection error (production):', error);
+    console.error('MongoDB URI format check:', MONGODB_URI ? 'URI exists' : 'URI missing');
+    throw error;
+  });
 }
 
 export default clientPromise; 

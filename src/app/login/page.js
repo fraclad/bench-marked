@@ -4,6 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import FallingChairs from '../components/FallingChairs';
 
+// Helper function to get the correct API base path
+function getApiBasePath() {
+  return process.env.NODE_ENV === 'production' ? '/app/bench-marked/api' : '/api';
+}
+
 export default function Login() {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -30,7 +35,7 @@ export default function Login() {
 
     try {
       // Call authentication API
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${getApiBasePath()}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -20,13 +20,34 @@ export async function POST(request) {
       );
     }
 
-    // Connect to MongoDB
-    const client = await clientPromise;
+    // Connect to MongoDB with detailed error handling
+    let client;
+    try {
+      client = await clientPromise;
+      console.log('MongoDB connection successful');
+    } catch (connectionError) {
+      console.error('MongoDB connection failed:', connectionError);
+      return NextResponse.json(
+        { error: 'Database connection failed. Please check MongoDB configuration.' },
+        { status: 503 }
+      );
+    }
+
     const db = client.db('app');
     const usersCollection = db.collection('users');
 
-    // Find user in database
-    const user = await usersCollection.findOne({ username: username });
+    // Check if users collection exists and has documents
+    let user;
+    try {
+      user = await usersCollection.findOne({ username: username });
+      console.log('Database query successful, user found:', !!user);
+    } catch (queryError) {
+      console.error('Database query failed:', queryError);
+      return NextResponse.json(
+        { error: 'Database query failed. Please check database configuration.' },
+        { status: 503 }
+      );
+    }
 
     if (!user) {
       return NextResponse.json(
@@ -61,7 +82,28 @@ export async function POST(request) {
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error details:', error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    
+    // Provide more specific error messages based on error type
+    if (error.name === 'MongoNetworkError') {
+      return NextResponse.json(
+        { error: 'Cannot connect to database. Check network and MongoDB configuration.' },
+        { status: 503 }
+      );
+    } else if (error.name === 'MongoServerSelectionError') {
+      return NextResponse.json(
+        { error: 'Database server not reachable. Check MongoDB cluster status.' },
+        { status: 503 }
+      );
+    } else if (error.name === 'MongoParseError') {
+      return NextResponse.json(
+        { error: 'Invalid database connection string format.' },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
