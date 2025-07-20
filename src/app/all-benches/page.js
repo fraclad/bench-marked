@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { checkAuth, clearAuth, startSessionMonitor } from '../../lib/auth';
-import { getBenchData, updateBenchRecord, deleteBenchRecord } from '../../lib/api';
+import { hasValidAuth, getCurrentUser, verifyAuth, logout } from '../../lib/auth';
+import { getAllBenches, updateBench, deleteBench as deleteBenchRecord } from '../../lib/api';
 import FallingChairs from '../components/FallingChairs';
 
 export default function AllBenches() {
@@ -19,25 +19,28 @@ export default function AllBenches() {
   // Check authentication on component mount
   useEffect(() => {
     const authenticateUser = async () => {
-      const authResult = await checkAuth();
-      
-      if (!authResult.isAuthenticated) {
-        if (authResult.expired) {
-          alert('Your session has expired. Please sign in again.');
-        }
+      // Check if user has valid local auth
+      if (!hasValidAuth()) {
+        router.push('/login');
+        return;
+      }
+
+      // Get current user info
+      const user = getCurrentUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+
+      // Verify with server
+      const isValid = await verifyAuth();
+      if (!isValid) {
+        logout();
         router.push('/login');
         return;
       }
       
       setIsLoading(false);
-      
-      // Start session monitoring
-      const stopMonitor = startSessionMonitor(() => {
-        alert('Your session has expired. Please sign in again.');
-        router.push('/login');
-      });
-      
-      return () => stopMonitor && stopMonitor();
     };
 
     authenticateUser();
@@ -52,16 +55,16 @@ export default function AllBenches() {
       setDataError('');
       
       try {
-        const data = await getBenchData();
+        const data = await getAllBenches();
         setBenches(data);
       } catch (error) {
-        console.error('Failed to load bench data:', error);
-        setDataError('Failed to load bench records. Please try refreshing the page.');
+        console.error('Error loading bench data:', error);
+        setDataError('Failed to load bench data. Please refresh to try again.');
         
-        // Fallback to localStorage if API fails
-        const savedBenches = localStorage.getItem('benchmarked-data');
-        if (savedBenches) {
-          setBenches(JSON.parse(savedBenches));
+        // Check if it's an auth error
+        if (error.message.includes('authentication') || error.message.includes('unauthorized')) {
+          logout();
+          router.push('/login');
         }
       } finally {
         setDataLoading(false);
@@ -69,17 +72,17 @@ export default function AllBenches() {
     };
 
     loadBenchData();
-  }, [isLoading]);
+  }, [isLoading, router]);
 
   const deleteBench = async (id) => {
     if (!confirm('Are you sure you want to delete this bench record?')) {
       return;
     }
 
-    try {
-      await deleteBenchRecord(id);
-      
-      // Remove from local state
+          try {
+        await deleteBenchRecord(id);
+        
+        // Remove from local state
       setBenches(benches.filter(bench => bench.id !== id));
       
       // Also remove from localStorage backup
@@ -91,7 +94,7 @@ export default function AllBenches() {
       
       if (error.message.includes('authentication') || error.message.includes('token')) {
         alert('Your session has expired. Please sign in again.');
-        clearAuth();
+        logout();
         router.push('/login');
       } else {
         alert('Failed to delete bench record. Please try again.');
@@ -119,7 +122,7 @@ export default function AllBenches() {
         longitude: parseFloat(editForm.longitude) || 0
       };
 
-      const updatedBench = await updateBenchRecord(editingId, updates);
+      const updatedBench = await updateBench(editingId, updates);
       
       // Update local state
       setBenches(benches.map(bench => 
@@ -140,7 +143,7 @@ export default function AllBenches() {
       
       if (error.message.includes('authentication') || error.message.includes('token')) {
         alert('Your session has expired. Please sign in again.');
-        clearAuth();
+        logout();
         router.push('/login');
       } else {
         alert('Failed to update bench record. Please try again.');

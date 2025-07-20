@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { checkAuth, clearAuth, getSessionTimeLeft, startSessionMonitor } from '../lib/auth';
-import { getBenchData, createBenchRecord } from '../lib/api';
+import { hasValidAuth, getCurrentUser, verifyAuth, logout } from '../lib/auth';
+import { getAllBenches, createBench } from '../lib/api';
 import FallingChairs from './components/FallingChairs';
 
 export default function Home() {
@@ -18,26 +18,29 @@ export default function Home() {
   // Check authentication on component mount
   useEffect(() => {
     const authenticateUser = async () => {
-      const authResult = await checkAuth();
-      
-      if (!authResult.isAuthenticated) {
-        if (authResult.expired) {
-          alert('Your session has expired. Please sign in again.');
-        }
+      // Check if user has valid local auth
+      if (!hasValidAuth()) {
+        router.push('/login');
+        return;
+      }
+
+      // Get current user info
+      const user = getCurrentUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+
+      // Verify with server
+      const isValid = await verifyAuth();
+      if (!isValid) {
+        logout();
         router.push('/login');
         return;
       }
       
-      setCurrentUser(authResult.username);
+      setCurrentUser(user.username);
       setIsLoading(false);
-      
-      // Start session monitoring
-      const stopMonitor = startSessionMonitor(() => {
-        alert('Your session has expired. Please sign in again.');
-        router.push('/login');
-      });
-      
-      return () => stopMonitor && stopMonitor();
     };
 
     authenticateUser();
@@ -52,16 +55,16 @@ export default function Home() {
       setDataError('');
       
       try {
-        const data = await getBenchData();
+        const data = await getAllBenches();
         setBenches(data);
       } catch (error) {
-        console.error('Failed to load bench data:', error);
-        setDataError('Failed to load bench records. Please try refreshing the page.');
+        console.error('Error loading bench data:', error);
+        setDataError('Failed to load bench data. Please refresh to try again.');
         
-        // Fallback to localStorage if API fails
-        const savedBenches = localStorage.getItem('benchmarked-data');
-        if (savedBenches) {
-          setBenches(JSON.parse(savedBenches));
+        // Check if it's an auth error
+        if (error.message.includes('authentication') || error.message.includes('unauthorized')) {
+          logout();
+          router.push('/login');
         }
       } finally {
         setDataLoading(false);
@@ -69,7 +72,7 @@ export default function Home() {
     };
 
     loadBenchData();
-  }, [isLoading]);
+  }, [isLoading, router]);
 
   const logCurrentBench = async () => {
     setIsLogging(true);
@@ -116,7 +119,7 @@ export default function Home() {
       });
 
       // Create bench record in MongoDB
-      const newBench = await createBenchRecord({
+      const newBench = await createBench({
         timestamp,
         location: locationName,
         latitude,
@@ -136,7 +139,7 @@ export default function Home() {
       
       if (error.message.includes('authentication') || error.message.includes('token')) {
         alert('Your session has expired. Please sign in again.');
-        clearAuth();
+        logout();
         router.push('/login');
       } else if (error.message.includes('location')) {
         alert('Could not get your location. Please make sure location services are enabled.');
@@ -150,7 +153,7 @@ export default function Home() {
 
   const handleLogout = () => {
     if (confirm('Are you sure you want to sign out?')) {
-      clearAuth();
+      logout();
       router.push('/login');
     }
   };
