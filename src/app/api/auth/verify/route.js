@@ -10,14 +10,17 @@ if (!JWT_SECRET) {
 
 export async function POST(request) {
   try {
-    const { token } = await request.json();
-
-    if (!token) {
+    // Get token from Authorization header
+    const authHeader = request.headers.get('authorization');
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
-        { error: 'Token is required' },
-        { status: 400 }
+        { error: 'Missing or invalid authorization header' },
+        { status: 401 }
       );
     }
+
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
     try {
       // Verify JWT token
@@ -41,6 +44,8 @@ export async function POST(request) {
       });
 
     } catch (jwtError) {
+      console.error('JWT verification error:', jwtError);
+      
       if (jwtError.name === 'TokenExpiredError') {
         return NextResponse.json(
           { error: 'Token expired', expired: true },

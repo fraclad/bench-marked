@@ -46,7 +46,7 @@ export async function createBench(benchData) {
     method: 'POST',
     body: JSON.stringify(benchData)
   });
-  return result;
+  return result.data || result; // Return the data property or fallback to full result
 }
 
 // Update a bench entry
@@ -55,7 +55,7 @@ export async function updateBench(id, benchData) {
     method: 'PUT',
     body: JSON.stringify(benchData)
   });
-  return result;
+  return result.data || result; // Return the data property or fallback to full result
 }
 
 // Delete a bench entry
@@ -63,11 +63,11 @@ export async function deleteBench(id) {
   const result = await makeAuthenticatedRequest(`${getApiBasePath()}/benchdata/${id}`, {
     method: 'DELETE'
   });
-  return result;
+  return result.data || result; // Return the data property or fallback to full result
 }
 
 // Get a single bench entry
 export async function getBench(id) {
   const result = await makeAuthenticatedRequest(`${getApiBasePath()}/benchdata/${id}`);
-  return result.bench;
-} 
+  return result.data || result; // Return the data property or fallback to full result
+}
