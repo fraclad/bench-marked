@@ -80,12 +80,17 @@ export async function GET(request, { params }) {
   }
 }
 
-// PUT - Update bench record by ID
+// PUT - Update bench record by ID (admin only)
 export async function PUT(request, { params }) {
   try {
     const authResult = await verifyToken(request);
     if (authResult.error) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
+
+    // Check if user has admin role
+    if (authResult.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Insufficient permissions. Admin access required.' }, { status: 403 });
     }
 
     const { id } = params;
@@ -164,12 +169,17 @@ export async function PUT(request, { params }) {
   }
 }
 
-// DELETE - Delete bench record by ID
+// DELETE - Delete bench record by ID (admin only)
 export async function DELETE(request, { params }) {
   try {
     const authResult = await verifyToken(request);
     if (authResult.error) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
+
+    // Check if user has admin role
+    if (authResult.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Insufficient permissions. Admin access required.' }, { status: 403 });
     }
 
     const { id } = params;

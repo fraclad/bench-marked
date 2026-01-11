@@ -53,6 +53,7 @@ export default function Login() {
         localStorage.setItem('benchmarked-token', data.token);
         localStorage.setItem('benchmarked-username', data.username);
         localStorage.setItem('benchmarked-expires-at', (Date.now() + data.expiresIn).toString());
+        localStorage.setItem('benchmarked-role', data.role || 'user');
         
         // Redirect to home
         router.push('/');
@@ -148,10 +149,6 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="text-center py-6 text-white/60 text-sm relative z-10">
-        🤓 vibe-coded in Houston rip
-      </footer>
     </div>
   );
 } 

@@ -25,8 +25,15 @@ export function getCurrentUser() {
   
   return {
     username: localStorage.getItem('benchmarked-username'),
-    token: localStorage.getItem('benchmarked-token')
+    token: localStorage.getItem('benchmarked-token'),
+    role: localStorage.getItem('benchmarked-role') || 'user'
   };
+}
+
+// Check if current user is an admin
+export function isAdmin() {
+  const user = getCurrentUser();
+  return user?.role === 'admin';
 }
 
 // Verify token with server
@@ -57,4 +64,5 @@ export function logout() {
   localStorage.removeItem('benchmarked-token');
   localStorage.removeItem('benchmarked-username'); 
   localStorage.removeItem('benchmarked-expires-at');
+  localStorage.removeItem('benchmarked-role');
 } 

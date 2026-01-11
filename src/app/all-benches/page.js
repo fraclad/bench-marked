@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { hasValidAuth, getCurrentUser, verifyAuth, logout } from '../../lib/auth';
+import { hasValidAuth, getCurrentUser, verifyAuth, logout, isAdmin } from '../../lib/auth';
 import { getAllBenches, updateBench, deleteBench as deleteBenchRecord } from '../../lib/api';
 import FallingChairs from '../components/FallingChairs';
 
@@ -15,6 +15,7 @@ export default function AllBenches() {
   const [dataLoading, setDataLoading] = useState(false);
   const [dataError, setDataError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
 
   // Check authentication on component mount
   useEffect(() => {
@@ -40,6 +41,7 @@ export default function AllBenches() {
         return;
       }
       
+      setUserIsAdmin(user.role === 'admin');
       setIsLoading(false);
     };
 
@@ -251,9 +253,11 @@ export default function AllBenches() {
                     <th className="px-3 sm:px-4 py-3 sm:py-4 text-left text-white font-semibold text-sm sm:text-lg whitespace-nowrap">
                       Account create
                     </th>
-                    <th className="px-3 sm:px-4 py-3 sm:py-4 text-left text-white font-semibold text-sm sm:text-lg whitespace-nowrap">
-                      Action
-                    </th>
+                    {userIsAdmin && (
+                      <th className="px-3 sm:px-4 py-3 sm:py-4 text-left text-white font-semibold text-sm sm:text-lg whitespace-nowrap">
+                        Action
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -314,60 +318,62 @@ export default function AllBenches() {
                       <td className="px-3 sm:px-4 py-3 sm:py-4 text-white/90 text-xs sm:text-sm whitespace-nowrap">
                         {bench.loggedBy}
                       </td>
-                      <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap">
-                        {editingId === bench.id ? (
-                          <div className="flex space-x-1 sm:space-x-2">
-                            <button
-                              onClick={saveEdit}
-                              disabled={saving}
-                              className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-2 sm:px-3 py-1 rounded-lg font-medium transition-colors text-xs sm:text-sm"
-                            >
-                              {saving ? (
-                                <div className="flex items-center space-x-1">
-                                  <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
-                                  <span className="hidden sm:inline">saving</span>
-                                </div>
-                              ) : (
-                                'save'
-                              )}
-                            </button>
-                            <button
-                              onClick={cancelEdit}
-                              disabled={saving}
-                              className="bg-gray-500 hover:bg-gray-600 disabled:bg-gray-400 text-white px-2 sm:px-3 py-1 rounded-lg font-medium transition-colors text-xs sm:text-sm"
-                            >
-                              cancel
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex space-x-1 sm:space-x-2">
-                            <button
-                              onClick={() => startEdit(bench)}
-                              className="bg-white/90 hover:bg-white text-purple-700 px-2 sm:px-3 py-1 rounded-lg font-medium transition-colors text-xs sm:text-sm"
-                            >
-                              edit
-                            </button>
-                            <button
-                              onClick={() => deleteBench(bench.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white px-2 sm:px-3 py-1 rounded-lg font-medium transition-colors text-xs sm:text-sm"
-                            >
-                              del
-                            </button>
-                          </div>
-                        )}
-                      </td>
+                      {userIsAdmin && (
+                        <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap">
+                          {editingId === bench.id ? (
+                            <div className="flex space-x-1 sm:space-x-2">
+                              <button
+                                onClick={saveEdit}
+                                disabled={saving}
+                                className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-2 sm:px-3 py-1 rounded-lg font-medium transition-colors text-xs sm:text-sm"
+                              >
+                                {saving ? (
+                                  <div className="flex items-center space-x-1">
+                                    <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                                    <span className="hidden sm:inline">saving</span>
+                                  </div>
+                                ) : (
+                                  'save'
+                                )}
+                              </button>
+                              <button
+                                onClick={cancelEdit}
+                                disabled={saving}
+                                className="bg-gray-500 hover:bg-gray-600 disabled:bg-gray-400 text-white px-2 sm:px-3 py-1 rounded-lg font-medium transition-colors text-xs sm:text-sm"
+                              >
+                                cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex space-x-1 sm:space-x-2">
+                              <button
+                                onClick={() => startEdit(bench)}
+                                className="bg-white/90 hover:bg-white text-purple-700 px-2 sm:px-3 py-1 rounded-lg font-medium transition-colors text-xs sm:text-sm"
+                              >
+                                edit
+                              </button>
+                              <button
+                                onClick={() => deleteBench(bench.id)}
+                                className="bg-red-600 hover:bg-red-700 text-white px-2 sm:px-3 py-1 rounded-lg font-medium transition-colors text-xs sm:text-sm"
+                              >
+                                del
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   ))}
                   {benches.length === 0 && !dataLoading && (
                     <tr>
-                      <td colSpan="7" className="px-6 py-12 text-center text-white/70 text-sm sm:text-lg">
-                        No bench records found. Go back and log your first bench!
+                      <td colSpan={userIsAdmin ? 7 : 6} className="px-6 py-12 text-center text-white/70 text-sm sm:text-lg">
+                        No bench records found. {userIsAdmin ? 'Go back and log your first bench!' : ''}
                       </td>
                     </tr>
                   )}
                   {dataLoading && (
                     <tr>
-                      <td colSpan="7" className="px-6 py-12 text-center text-white/70 text-sm sm:text-lg">
+                      <td colSpan={userIsAdmin ? 7 : 6} className="px-6 py-12 text-center text-white/70 text-sm sm:text-lg">
                         <div className="flex items-center justify-center space-x-3">
                           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/60"></div>
                           <span>Loading bench records from MongoDB...</span>
@@ -383,19 +389,21 @@ export default function AllBenches() {
 
         {/* Bottom Actions */}
         <div className="text-center mt-8 sm:mt-12">
-          <button
-            onClick={() => router.push('/')}
-            className="bg-red-600 hover:bg-red-700 text-white text-base sm:text-lg font-semibold py-3 sm:py-4 px-6 sm:px-8 rounded-2xl shadow-2xl transition-all duration-200 transform hover:scale-105"
-          >
-            Log New Bench Location
-          </button>
+          {userIsAdmin ? (
+            <button
+              onClick={() => router.push('/')}
+              className="bg-red-600 hover:bg-red-700 text-white text-base sm:text-lg font-semibold py-3 sm:py-4 px-6 sm:px-8 rounded-2xl shadow-2xl transition-all duration-200 transform hover:scale-105"
+            >
+              Log New Bench Location
+            </button>
+          ) : (
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl py-4 px-8 inline-block">
+              <p className="text-white/80 text-lg">👀 You have read-only access</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="text-center py-6 text-white/60 text-sm relative z-10">
-        🤓 vibe-coded in Houston rip
-      </footer>
     </div>
   );
 } 

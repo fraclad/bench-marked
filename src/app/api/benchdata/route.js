@@ -71,12 +71,17 @@ export async function GET(request) {
   }
 }
 
-// POST - Create new bench record
+// POST - Create new bench record (admin only)
 export async function POST(request) {
   try {
     const authResult = await verifyToken(request);
     if (authResult.error) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
+
+    // Check if user has admin role
+    if (authResult.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Insufficient permissions. Admin access required.' }, { status: 403 });
     }
 
     const body = await request.json();
