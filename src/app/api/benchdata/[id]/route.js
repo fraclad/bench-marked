@@ -1,17 +1,17 @@
 import { NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
-import clientPromise from '../../../../lib/mongodb';
+import getClientPromise from '../../../../lib/mongodb';
 import jwt from 'jsonwebtoken';
-
-// Get JWT secret from environment variables
-const JWT_SECRET = process.env.JWT_SECRET;
-
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
-}
 
 // Verify JWT token and extract user info
 async function verifyToken(request) {
+  const JWT_SECRET = process.env.JWT_SECRET;
+  
+  if (!JWT_SECRET) {
+    console.error('JWT_SECRET environment variable is not set');
+    return { error: 'Server configuration error', status: 500 };
+  }
+
   const authHeader = request.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return { error: 'Missing or invalid authorization header', status: 401 };
@@ -40,7 +40,7 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Invalid bench ID format' }, { status: 400 });
     }
 
-    const client = await clientPromise;
+    const client = await getClientPromise();
     const db = client.db('app');
     const collection = db.collection('benchdata');
 
@@ -97,7 +97,7 @@ export async function PUT(request, { params }) {
     const body = await request.json();
     const { location, latitude, longitude, notes, tags } = body;
 
-    const client = await clientPromise;
+    const client = await getClientPromise();
     const db = client.db('app');
     const collection = db.collection('benchdata');
 
@@ -178,7 +178,7 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: 'Invalid bench ID format' }, { status: 400 });
     }
 
-    const client = await clientPromise;
+    const client = await getClientPromise();
     const db = client.db('app');
     const collection = db.collection('benchdata');
 
@@ -223,4 +223,4 @@ export async function DELETE(request, { params }) {
       { status: 500 }
     );
   }
-} 
+}
