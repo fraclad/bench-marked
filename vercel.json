@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/app/bench-marked/",
+      "permanent": true
+    }
+  ]
+}
