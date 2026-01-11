@@ -222,7 +222,7 @@ export default function Home() {
               bench-marked!
             </h1>
             <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
-              A personal log of everywhere you've sat.
+              A personal log of everywhere you&apos;ve sat.
             </p>
             <div className="mt-4 text-sm" style={{ color: 'var(--text-muted)' }}>
               {benches.length} record{benches.length !== 1 ? 's' : ''} • MongoDB
