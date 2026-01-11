@@ -73,6 +73,7 @@ export async function POST(request) {
       { 
         userId: user._id,
         username: user.username,
+        role: user.role || 'user', // Include role in token (default to 'user')
         exp: Math.floor(Date.now() / 1000) + (30 * 60) // 30 minutes
       },
       JWT_SECRET
@@ -82,6 +83,7 @@ export async function POST(request) {
       success: true,
       token,
       username: user.username,
+      role: user.role || 'user', // Return role to client
       expiresIn: 30 * 60 * 1000 // 30 minutes in milliseconds
     });
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { hasValidAuth, getCurrentUser, verifyAuth, logout } from '../lib/auth';
+import { hasValidAuth, getCurrentUser, verifyAuth, logout, isAdmin } from '../lib/auth';
 import { getAllBenches, createBench } from '../lib/api';
 import FallingChairs from './components/FallingChairs';
 
@@ -14,6 +14,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(false);
   const [dataError, setDataError] = useState('');
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
 
   // Check authentication on component mount
   useEffect(() => {
@@ -40,6 +41,7 @@ export default function Home() {
       }
       
       setCurrentUser(user.username);
+      setUserIsAdmin(user.role === 'admin');
       setIsLoading(false);
     };
 
@@ -212,23 +214,34 @@ export default function Home() {
           )}
         </div>
 
-        {/* Main Action Button */}
-        <div className="text-center mb-20">
-          <button
-            onClick={logCurrentBench}
-            disabled={isLogging}
-            className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-xl font-semibold py-6 px-12 rounded-2xl shadow-2xl transition-all duration-200 transform hover:scale-105 disabled:scale-100"
-          >
-            {isLogging ? (
-              <div className="flex items-center space-x-3">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                <span>Getting your location...</span>
-              </div>
-            ) : (
-              'log current bench location'
-            )}
-          </button>
-        </div>
+        {/* Main Action Button - Only shown to admins */}
+        {userIsAdmin && (
+          <div className="text-center mb-20">
+            <button
+              onClick={logCurrentBench}
+              disabled={isLogging}
+              className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-xl font-semibold py-6 px-12 rounded-2xl shadow-2xl transition-all duration-200 transform hover:scale-105 disabled:scale-100"
+            >
+              {isLogging ? (
+                <div className="flex items-center space-x-3">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                  <span>Getting your location...</span>
+                </div>
+              ) : (
+                'log current bench location'
+              )}
+            </button>
+          </div>
+        )}
+        
+        {/* Read-only message for non-admin users */}
+        {!userIsAdmin && (
+          <div className="text-center mb-20">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl py-4 px-8 inline-block">
+              <p className="text-white/80 text-lg">👀 You have read-only access</p>
+            </div>
+          </div>
+        )}
 
         {/* Data Error */}
         {dataError && (
@@ -280,10 +293,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="text-center py-6 text-white/60 text-sm relative z-10">
-        🤓 vibe-coded in Houston rip
-      </footer>
     </div>
   );
 }
