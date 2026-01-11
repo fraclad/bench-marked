@@ -1,14 +1,17 @@
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
-// Get JWT secret from environment variables
-const JWT_SECRET = process.env.JWT_SECRET;
-
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
-}
-
 export async function POST(request) {
+  // Get JWT secret from environment variables (checked at runtime, not build time)
+  const JWT_SECRET = process.env.JWT_SECRET;
+  
+  if (!JWT_SECRET) {
+    console.error('JWT_SECRET environment variable is not set');
+    return NextResponse.json(
+      { error: 'Server configuration error' },
+      { status: 500 }
+    );
+  }
   try {
     // Get token from Authorization header
     const authHeader = request.headers.get('authorization');

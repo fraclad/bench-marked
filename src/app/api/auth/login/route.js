@@ -1,15 +1,19 @@
 import { NextResponse } from 'next/server';
-import clientPromise from '../../../../lib/mongodb';
+import getClientPromise from '../../../../lib/mongodb';
 import jwt from 'jsonwebtoken';
 
-// Get JWT secret from environment variables
-const JWT_SECRET = process.env.JWT_SECRET;
-
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
-}
-
 export async function POST(request) {
+  // Get JWT secret from environment variables (checked at runtime, not build time)
+  const JWT_SECRET = process.env.JWT_SECRET;
+  
+  if (!JWT_SECRET) {
+    console.error('JWT_SECRET environment variable is not set');
+    return NextResponse.json(
+      { error: 'Server configuration error' },
+      { status: 500 }
+    );
+  }
+
   try {
     const { username, password } = await request.json();
 
@@ -23,7 +27,7 @@ export async function POST(request) {
     // Connect to MongoDB with detailed error handling
     let client;
     try {
-      client = await clientPromise;
+      client = await getClientPromise();
       console.log('MongoDB connection successful');
     } catch (connectionError) {
       console.error('MongoDB connection failed:', connectionError);
@@ -109,4 +113,4 @@ export async function POST(request) {
       { status: 500 }
     );
   }
-} 
+}
