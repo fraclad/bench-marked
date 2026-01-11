@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { hasValidAuth, getCurrentUser, verifyAuth, logout } from '../lib/auth';
+import { hasValidAuth, getCurrentUser, verifyAuth, logout, isReadOnlyUser } from '../lib/auth';
 import { getAllBenches, createBench } from '../lib/api';
 import FallingChairs from './components/FallingChairs';
 
@@ -14,6 +14,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(false);
   const [dataError, setDataError] = useState('');
+  const [canEdit, setCanEdit] = useState(false);
 
   // Check authentication on component mount
   useEffect(() => {
@@ -40,6 +41,7 @@ export default function Home() {
       }
       
       setCurrentUser(user.username);
+      setCanEdit(!isReadOnlyUser());
       setIsLoading(false);
     };
 
@@ -75,6 +77,11 @@ export default function Home() {
   }, [isLoading, router]);
 
   const logCurrentBench = async () => {
+    if (!canEdit) {
+      alert('You do not have permission to add new records.');
+      return;
+    }
+
     setIsLogging(true);
     
     try {
@@ -165,11 +172,11 @@ export default function Home() {
   // Show loading while checking authentication
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-400 via-purple-500 to-purple-600 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
         <FallingChairs />
         <div className="text-center relative z-10">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p className="text-white text-lg">Checking authentication...</p>
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-transparent mx-auto mb-4" style={{ borderTopColor: 'var(--accent)' }}></div>
+          <p style={{ color: 'var(--text-secondary)' }}>Authenticating...</p>
         </div>
       </div>
     );
@@ -179,110 +186,143 @@ export default function Home() {
   const recentBenches = benches.slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-400 via-purple-500 to-purple-600 flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-primary)' }}>
       <FallingChairs />
-      <div className="container mx-auto px-6 py-16 flex-grow relative z-10">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-6xl md:text-7xl font-bold text-white mb-4 tracking-wide">
-            bench-marked!
-          </h1>
-          <p className="text-xl md:text-2xl text-white/90 font-medium">
-            Track where ur ass have sat on 😊
-          </p>
-          
-          {/* Current User Display */}
-          {currentUser && (
-            <div className="mt-4 flex flex-col items-center space-y-2">
-              <div className="flex items-center justify-center space-x-4">
-                <span className="text-white/80 text-lg">
-                  Logged in as: <strong>{currentUser}</strong>
-                </span>
-                <button 
-                  onClick={handleLogout}
-                  className="text-red-200 hover:text-red-100 text-sm underline transition-colors duration-200"
-                >
-                  Sign out
-                </button>
-              </div>
-              <div className="text-white/50 text-xs">
-                🗄️ Connected to MongoDB • {benches.length} record{benches.length !== 1 ? 's' : ''} loaded
-              </div>
-            </div>
-          )}
+      
+      {/* Header bar */}
+      <header className="relative z-10 px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🪑</span>
+          <span className="font-serif text-xl" style={{ color: 'var(--text-primary)' }}>bench-marked</span>
         </div>
-
-        {/* Main Action Button */}
-        <div className="text-center mb-20">
-          <button
-            onClick={logCurrentBench}
-            disabled={isLogging}
-            className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-xl font-semibold py-6 px-12 rounded-2xl shadow-2xl transition-all duration-200 transform hover:scale-105 disabled:scale-100"
-          >
-            {isLogging ? (
-              <div className="flex items-center space-x-3">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                <span>Getting your location...</span>
-              </div>
-            ) : (
-              'log current bench location'
-            )}
-          </button>
-        </div>
-
-        {/* Data Error */}
-        {dataError && (
-          <div className="text-center mb-8">
-            <div className="bg-red-600/20 border border-red-400/20 rounded-lg py-3 px-4 text-red-200 text-sm">
-              ⚠️ {dataError}
-            </div>
+        {currentUser && (
+          <div className="flex items-center gap-4">
+            <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              {currentUser}
+              {!canEdit && <span className="ml-2 text-xs px-2 py-0.5 rounded" style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>view only</span>}
+            </span>
+            <button 
+              onClick={handleLogout}
+              className="text-sm transition-colors"
+              style={{ color: 'var(--text-muted)' }}
+              onMouseEnter={(e) => e.target.style.color = 'var(--danger)'}
+              onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}
+            >
+              sign out
+            </button>
           </div>
         )}
+      </header>
 
-        {/* Previous Benches */}
-        <div className="text-center">
-          <h2 className="text-2xl font-semibold text-white mb-8">
-            Previous benches
-            {dataLoading && (
-              <span className="ml-3 text-sm text-white/60">
-                <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white/60"></div>
-              </span>
-            )}
-          </h2>
-          
-          <div className="space-y-4 mb-8">
-            {recentBenches.map((bench) => (
-              <div
-                key={bench.id}
-                className="text-white/90 text-lg cursor-pointer hover:text-white transition-colors duration-200"
-                onClick={navigateToAllBenches}
-              >
-                {bench.timestamp} {bench.location} - logged by {bench.loggedBy}
-              </div>
-            ))}
-            
-            {benches.length === 0 && !dataLoading && (
-              <p className="text-white/70 text-lg italic">
-                No benches logged yet. Start by logging your current location!
-              </p>
-            )}
+      <main className="flex-grow relative z-10 px-6 py-16">
+        <div className="max-w-2xl mx-auto">
+          {/* Hero */}
+          <div className="text-center mb-20">
+            <h1 className="font-serif text-5xl md:text-6xl mb-4" style={{ color: 'var(--text-primary)' }}>
+              bench-marked!
+            </h1>
+            <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
+              A personal log of everywhere you've sat.
+            </p>
+            <div className="mt-4 text-sm" style={{ color: 'var(--text-muted)' }}>
+              {benches.length} record{benches.length !== 1 ? 's' : ''} • MongoDB
+            </div>
           </div>
 
-          {/* See All Link */}
-          {benches.length > 3 && (
-            <button 
-              className="text-white/80 hover:text-white text-lg underline transition-colors duration-200"
-              onClick={navigateToAllBenches}
-            >
-              (see all)
-            </button>
+          {/* Main Action */}
+          {canEdit && (
+            <div className="text-center mb-20">
+              <button
+                onClick={logCurrentBench}
+                disabled={isLogging}
+                className="px-10 py-4 text-lg font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02] disabled:scale-100 disabled:opacity-60"
+                style={{ 
+                  background: 'var(--accent)', 
+                  color: 'var(--bg-primary)',
+                }}
+                onMouseEnter={(e) => { if (!isLogging) e.target.style.background = 'var(--accent-hover)' }}
+                onMouseLeave={(e) => e.target.style.background = 'var(--accent)'}
+              >
+                {isLogging ? (
+                  <span className="flex items-center gap-3">
+                    <span className="animate-spin rounded-full h-5 w-5 border-2 border-transparent" style={{ borderTopColor: 'var(--bg-primary)' }}></span>
+                    Getting location...
+                  </span>
+                ) : (
+                  'Log current bench'
+                )}
+              </button>
+            </div>
           )}
+
+          {/* Error */}
+          {dataError && (
+            <div className="text-center mb-8">
+              <div className="inline-block rounded-lg py-3 px-5 text-sm" style={{ background: 'rgba(196, 92, 79, 0.15)', color: 'var(--danger)', border: '1px solid rgba(196, 92, 79, 0.3)' }}>
+                {dataError}
+              </div>
+            </div>
+          )}
+
+          {/* Recent Entries */}
+          <div>
+            <h2 className="text-sm font-medium uppercase tracking-wider mb-6" style={{ color: 'var(--text-muted)' }}>
+              Recent entries
+              {dataLoading && (
+                <span className="ml-2 inline-block animate-spin rounded-full h-3 w-3 border border-transparent" style={{ borderTopColor: 'var(--text-muted)' }}></span>
+              )}
+            </h2>
+            
+            <div className="space-y-4">
+              {recentBenches.map((bench) => (
+                <div
+                  key={bench.id}
+                  className="p-4 rounded-lg cursor-pointer transition-all duration-200"
+                  style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+                  onClick={navigateToAllBenches}
+                  onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--text-muted)'}
+                  onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>{bench.location}</p>
+                      <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>{bench.timestamp}</p>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded shrink-0" style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>
+                      {bench.loggedBy}
+                    </span>
+                  </div>
+                </div>
+              ))}
+              
+              {benches.length === 0 && !dataLoading && (
+                <p className="text-center py-8" style={{ color: 'var(--text-muted)' }}>
+                  No benches logged yet. {canEdit ? 'Start by logging your current location!' : 'Check back later for entries.'}
+                </p>
+              )}
+            </div>
+
+            {/* See All */}
+            {benches.length > 0 && (
+              <div className="text-center mt-8">
+                <button 
+                  className="text-sm transition-colors"
+                  style={{ color: 'var(--accent)' }}
+                  onClick={navigateToAllBenches}
+                  onMouseEnter={(e) => e.target.style.color = 'var(--accent-hover)'}
+                  onMouseLeave={(e) => e.target.style.color = 'var(--accent)'}
+                >
+                  View all {benches.length} entries →
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </main>
 
       {/* Footer */}
-      <footer className="text-center py-6 text-white/60 text-sm relative z-10">
-        🤓 vibe-coded in Houston rip
+      <footer className="relative z-10 text-center py-6 text-sm" style={{ color: 'var(--text-muted)', borderTop: '1px solid var(--border)' }}>
+        made in Houston
       </footer>
     </div>
   );

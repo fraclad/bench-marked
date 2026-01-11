@@ -15,17 +15,17 @@ export default function FallingChairs() {
     } else {
       // Generate new chairs and store them for the session
       const generateChairs = () => {
-        const chairCount = 8;
+        const chairCount = 12;
         const newChairs = [];
         
         for (let i = 0; i < chairCount; i++) {
           newChairs.push({
             id: i,
             left: Math.random() * 100,
-            duration: Math.random() * 15 + 10,
-            delay: Math.random() * 20,
-            opacity: Math.random() * 0.25 + 0.1,
-            size: Math.random() * 15 + 25,
+            duration: Math.random() * 20 + 15,
+            delay: Math.random() * 25,
+            opacity: Math.random() * 0.12 + 0.04,
+            size: Math.random() * 20 + 20,
           });
         }
         
@@ -59,13 +59,14 @@ export default function FallingChairs() {
       {chairs.map((chair) => (
         <div
           key={chair.id}
-          className="absolute text-white/30"
+          className="absolute"
           style={{
             left: `${chair.left}%`,
-            top: '-50px',
+            top: '-60px',
             fontSize: `${chair.size}px`,
             opacity: chair.opacity,
             animation: `fallAndSpin ${chair.duration}s ${chair.delay}s linear infinite`,
+            filter: 'grayscale(0.4)',
           }}
         >
           🪑
@@ -75,21 +76,21 @@ export default function FallingChairs() {
       <style jsx global>{`
         @keyframes fallAndSpin {
           0% {
-            transform: translateY(-100px) rotate(0deg);
+            transform: translateY(-80px) rotate(0deg);
             opacity: 0;
           }
-          10% {
-            opacity: 0.8;
+          5% {
+            opacity: 1;
           }
-          90% {
-            opacity: 0.8;
+          95% {
+            opacity: 1;
           }
           100% {
-            transform: translateY(calc(100vh + 100px)) rotate(360deg);
+            transform: translateY(calc(100vh + 80px)) rotate(360deg);
             opacity: 0;
           }
         }
       `}</style>
     </div>
   );
-} 
+}

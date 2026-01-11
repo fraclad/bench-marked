@@ -68,90 +68,116 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-400 via-purple-500 to-purple-600 flex flex-col items-center justify-center">
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-primary)' }}>
       <FallingChairs />
-      <div className="w-full max-w-md px-6 flex-grow flex flex-col justify-center relative z-10">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-6xl md:text-7xl font-bold text-white mb-4 tracking-wide">
-            bench-marked!
-          </h1>
-          <p className="text-xl md:text-2xl text-white/90 font-medium">
-            Track where ur ass have sat on 😊
-          </p>
-        </div>
-
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Username Input */}
-          <div>
-            <input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              className="w-full px-6 py-4 bg-white/90 text-gray-800 placeholder-gray-500 rounded-2xl text-lg font-medium focus:outline-none focus:ring-4 focus:ring-white/30 transition-all"
-              placeholder="username"
-              required
-              autoComplete="username"
-            />
-          </div>
-
-          {/* Password Input */}
-          <div>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-6 py-4 bg-white/90 text-gray-800 placeholder-gray-500 rounded-2xl text-lg font-medium focus:outline-none focus:ring-4 focus:ring-white/30 transition-all"
-              placeholder="password"
-              required
-              autoComplete="current-password"
-            />
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="text-center">
-              <p className="text-red-200 text-sm bg-red-600/20 rounded-lg py-3 px-4 border border-red-400/20">
-                {error}
-              </p>
+      
+      <main className="flex-grow flex items-center justify-center px-6 relative z-10">
+        <div className="w-full max-w-sm">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <span className="text-4xl">🪑</span>
             </div>
-          )}
+            <h1 className="font-serif text-4xl md:text-5xl mb-3" style={{ color: 'var(--text-primary)' }}>
+              bench-marked
+            </h1>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              Sign in to continue
+            </p>
+          </div>
 
-          {/* Sign In Button */}
-          <div className="pt-4">
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-lg text-base focus:outline-none transition-all"
+                style={{ 
+                  background: 'var(--bg-card)', 
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border)'
+                }}
+                placeholder="Username"
+                required
+                autoComplete="username"
+                onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
+                onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+              />
+            </div>
+
+            <div>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-lg text-base focus:outline-none transition-all"
+                style={{ 
+                  background: 'var(--bg-card)', 
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border)'
+                }}
+                placeholder="Password"
+                required
+                autoComplete="current-password"
+                onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
+                onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+              />
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div 
+                className="rounded-lg py-3 px-4 text-sm"
+                style={{ 
+                  background: 'rgba(196, 92, 79, 0.15)', 
+                  color: 'var(--danger)',
+                  border: '1px solid rgba(196, 92, 79, 0.3)'
+                }}
+              >
+                {error}
+              </div>
+            )}
+
+            {/* Sign In Button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-xl font-semibold py-4 px-6 rounded-2xl shadow-2xl transition-all duration-200 transform hover:scale-105 disabled:scale-100"
+              className="w-full py-3 rounded-lg text-base font-medium transition-all duration-200 disabled:opacity-60"
+              style={{ 
+                background: 'var(--accent)', 
+                color: 'var(--bg-primary)'
+              }}
+              onMouseEnter={(e) => { if (!isLoading) e.target.style.background = 'var(--accent-hover)' }}
+              onMouseLeave={(e) => e.target.style.background = 'var(--accent)'}
             >
               {isLoading ? (
-                <div className="flex items-center justify-center space-x-3">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                  <span>Signing in...</span>
-                </div>
+                <span className="flex items-center justify-center gap-3">
+                  <span className="animate-spin rounded-full h-4 w-4 border-2 border-transparent" style={{ borderTopColor: 'var(--bg-primary)' }}></span>
+                  Signing in...
+                </span>
               ) : (
                 'Sign in'
               )}
             </button>
-          </div>
-        </form>
+          </form>
 
-        {/* Demo Info */}
-        <div className="mt-12 text-center">
-          <p className="text-white/70 text-sm mb-4">Connected to MongoDB</p>
-          <div className="space-y-2 text-white/60 text-xs">
-            <p>💡 Session expires after 30 minutes of inactivity</p>
+          {/* Info */}
+          <div className="mt-8 text-center space-y-2">
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              Session expires after 30 minutes of inactivity
+            </p>
           </div>
         </div>
-      </div>
+      </main>
 
       {/* Footer */}
-      <footer className="text-center py-6 text-white/60 text-sm relative z-10">
-        🤓 vibe-coded in Houston rip
+      <footer className="relative z-10 text-center py-6 text-sm" style={{ color: 'var(--text-muted)' }}>
+        made in Houston
       </footer>
     </div>
   );
-} 
+}

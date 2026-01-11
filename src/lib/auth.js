@@ -29,6 +29,15 @@ export function getCurrentUser() {
   };
 }
 
+// Check if current user is read-only (cannot perform CRUD operations)
+export function isReadOnlyUser() {
+  const user = getCurrentUser();
+  if (!user) return true; // No user = read only
+  
+  // "user" username is read-only
+  return user.username?.toLowerCase() === 'user';
+}
+
 // Verify token with server
 export async function verifyAuth() {
   const user = getCurrentUser();
@@ -57,4 +66,4 @@ export function logout() {
   localStorage.removeItem('benchmarked-token');
   localStorage.removeItem('benchmarked-username'); 
   localStorage.removeItem('benchmarked-expires-at');
-} 
+}
